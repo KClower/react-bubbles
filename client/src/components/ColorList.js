@@ -1,32 +1,57 @@
 import React, { useState } from "react";
-import axios from "axios";
+
+import { AxiosAuth } from "../Utils/AxiosAuth";
 
 const initialColor = {
   color: "",
   code: { hex: "" }
 };
 
-const ColorList = ({ colors, updateColors }) => {
-  console.log("these are the colors", colors);
+const ColorList = ({ colors, updateColors, deleteColors }) => {
+  // console.log("these are the colors", colors);
+
   const [editing, setEditing] = useState(false);
   const [colorToEdit, setColorToEdit] = useState(initialColor);
 
   const editColor = color => {
     setEditing(true);
-    setColorToEdit(color);
+    setColorToEdit({ ...color });
   };
 
   const saveEdit = e => {
     e.preventDefault();
-
+    console.log(colorToEdit)
+    AxiosAuth()
+      .put(`http://localhost:5000/api/colors/${colorToEdit.id}`, colorToEdit)
+      .then(res => {
+        updateColors(res.data)
+        setColorToEdit(initialColor)
+        setEditing(false)
+      })
+      .catch(err => console.log(err))
     // Make a put request to save your updated color
     // think about where will you get the id from...
     // where is is saved right now?
   };
 
-  const deleteColor = color => {
+  const deleteColor = (e) => {
+    e.stopPropagation();
+    const colorId = Number(e.target.getAttribute("data-colorid"))
+
+    AxiosAuth()
+      .delete(`http://localhost:5000/api/colors/${colorId}`)
+      .then(res => {
+        deleteColors(res.data)
+        console.log(res)
+
+      })
+      .catch(err => console.log(err))
+
     // make a delete request to delete this color
   };
+
+
+
 
   return (
     <div className="colors-wrap">
@@ -35,7 +60,7 @@ const ColorList = ({ colors, updateColors }) => {
         {colors.map(color => (
           <li key={color.color} onClick={() => editColor(color)}>
             <span>
-              <span className="delete" onClick={() => deleteColor(color)}>
+              <span data-colorid={`${color.id}`} className="delete" onClick={deleteColor}>
                 x
               </span>{" "}
               {color.color}
